@@ -1,2 +1,4 @@
 # CrashReports
-Symbolicate iOS crash reports
+Symbolicate iOS Crash Reports
+
+![CrashReports](images/crashreports.gif "Symbolicate iOS Crash Reports")
