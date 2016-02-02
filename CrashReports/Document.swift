@@ -52,10 +52,13 @@ class Document: NSDocument {
         let readabilityHandler: (NSFileHandle!) -> Void = { file in
 
             let data = file.availableData
-            let s = NSString(data: data, encoding: NSUTF8StringEncoding)
-            let mas = NSMutableAttributedString(string: s as! String)
+            var mas = NSMutableAttributedString(string: "")
+
+            if let s = NSString(data: data, encoding: NSUTF8StringEncoding) {
+                mas = NSMutableAttributedString(string: s as String)
+            }
             
-            mas.addAttribute(NSFontAttributeName, value: self.font, range: NSMakeRange(0, s!.length))
+            mas.addAttribute(NSFontAttributeName, value: self.font, range: NSMakeRange(0, mas.length))
 
             dispatch_async(dispatch_get_main_queue()) { [unowned self] in
                 if(taskHasReceivedData == false) {
