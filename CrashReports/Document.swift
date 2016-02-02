@@ -25,8 +25,8 @@ class Document: NSDocument {
         // Add any code here that needs to be executed once the windowController has loaded the document's window.
 
         guard let scriptPath = NSBundle.mainBundle().pathForResource("symbolicatecrash", ofType: "pl") else { return }
-        guard self.crashReportPath != nil else { return }
-
+        guard let crashReportPath = self.crashReportPath else { return }
+        
         self.textView.selectable = true
         self.textView.editable = false
         
@@ -34,7 +34,7 @@ class Document: NSDocument {
         self.textView.textColor = NSColor.disabledControlTextColor()
 
         do {
-            self.textView.string = try NSString(contentsOfFile: self.crashReportPath!, encoding: NSUTF8StringEncoding) as String
+            self.textView.string = try NSString(contentsOfFile:crashReportPath, encoding:NSUTF8StringEncoding) as String
         } catch let error as NSError {
             let alert = NSAlert(error:error)
             alert.runModal()
@@ -45,7 +45,7 @@ class Document: NSDocument {
         
         let task = NSTask()
         task.launchPath = "/usr/bin/perl"
-        task.arguments = [scriptPath, self.crashReportPath! as String]
+        task.arguments = [scriptPath, crashReportPath]
         task.standardOutput = NSPipe()
 //        task.standardError = task.standardOutput
         
@@ -93,7 +93,7 @@ class Document: NSDocument {
     }
     
     override func readFromURL(url: NSURL, ofType typeName: String) throws {
-        self.crashReportPath = url.path;
+        self.crashReportPath = url.path
     }
 }
 
