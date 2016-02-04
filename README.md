@@ -1,6 +1,8 @@
 # CrashReports
 Symbolicate iOS Crash Reports
 
+Download [CrashReports 0.1](http://seriot.ch/crashreports/CrashReports_0_1.app.zip)
+
 ![CrashReports](images/crashreports.gif "Symbolicate iOS Crash Reports")
 
 CrashReports is a Cocoa wrapper over Apple's `symbolicatecrash.pl`.
