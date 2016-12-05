@@ -16,25 +16,25 @@ class Document: NSDocument {
     var font: NSFont
     
     override init() {
-        self.font = NSFont.userFixedPitchFontOfSize(11)!
+        self.font = NSFont.userFixedPitchFont(ofSize: 11)!
         super.init()
     }
 
-    override func windowControllerDidLoadNib(aController: NSWindowController) {
+    override func windowControllerDidLoadNib(_ aController: NSWindowController) {
         super.windowControllerDidLoadNib(aController)
         // Add any code here that needs to be executed once the windowController has loaded the document's window.
 
-        guard let scriptPath = NSBundle.mainBundle().pathForResource("symbolicatecrash", ofType: "pl") else { return }
+        guard let scriptPath = Bundle.main.path(forResource: "symbolicatecrash", ofType: "pl") else { return }
         guard let crashReportPath = self.crashReportPath else { return }
         
-        self.textView.selectable = true
-        self.textView.editable = false
+        self.textView.isSelectable = true
+        self.textView.isEditable = false
         
         self.textView.font = self.font
-        self.textView.textColor = NSColor.disabledControlTextColor()
+        self.textView.textColor = NSColor.disabledControlTextColor
 
         do {
-            self.textView.string = try NSString(contentsOfFile:crashReportPath, encoding:NSUTF8StringEncoding) as String
+            self.textView.string = try NSString(contentsOfFile:crashReportPath, encoding:String.Encoding.utf8.rawValue) as String
         } catch let error as NSError {
             let alert = NSAlert(error:error)
             alert.runModal()
@@ -43,43 +43,45 @@ class Document: NSDocument {
         
         var taskHasReceivedData = false
         
-        let task = NSTask()
+        let task = Process()
         task.launchPath = "/usr/bin/perl"
         task.arguments = [scriptPath, crashReportPath]
-        task.standardOutput = NSPipe()
+        task.standardOutput = Pipe()
 //        task.standardError = task.standardOutput
         
-        let readabilityHandler: (NSFileHandle!) -> Void = { file in
+        let readabilityHandler: (FileHandle!) -> Void = { file in
 
             let data = file.availableData
             var mas = NSMutableAttributedString(string: "")
 
-            if let s = NSString(data: data, encoding: NSUTF8StringEncoding) {
+            if let s = NSString(data: data, encoding: String.Encoding.utf8.rawValue) {
                 mas = NSMutableAttributedString(string: s as String)
             }
             
             mas.addAttribute(NSFontAttributeName, value: self.font, range: NSMakeRange(0, mas.length))
 
-            dispatch_async(dispatch_get_main_queue()) { [unowned self] in
+            DispatchQueue.main.async { [unowned self] in
                 if(taskHasReceivedData == false) {
                     self.textView.string = ""
                     taskHasReceivedData = true
                 }
 
-                self.textView.textColor = NSColor.controlTextColor()
-                self.textView.textStorage?.appendAttributedString(mas)
+                self.textView.textColor = NSColor.controlTextColor
+                self.textView.textStorage?.append(mas)
             }
         }
 
-        let terminationHandler: (NSTask!) -> Void = { task in
+        let terminationHandler: (Process!) -> Void = { task in
             
-            dispatch_async(dispatch_get_main_queue()) {
-                task.standardOutput?.fileHandleForReading.readabilityHandler = nil
-                print("-- task terminated")
+            DispatchQueue.main.async {
+                guard let output = task.standardOutput as? Pipe else { return }
+                output.fileHandleForReading.readabilityHandler = nil
+                Swift.print("-- task terminated")
             }
         }
 
-        task.standardOutput?.fileHandleForReading.readabilityHandler = readabilityHandler
+        guard let output = task.standardOutput as? Pipe else { return }
+        output.fileHandleForReading.readabilityHandler = readabilityHandler
         task.terminationHandler = terminationHandler
         
         task.launch()
@@ -95,7 +97,7 @@ class Document: NSDocument {
         return "Document"
     }
     
-    override func readFromURL(url: NSURL, ofType typeName: String) throws {
+    override func read(from url: URL, ofType typeName: String) throws {
         self.crashReportPath = url.path
     }
 }
